@@ -8,6 +8,7 @@ export const ErrorCode = {
   InvalidInput: "INVALID_INPUT",
   PathDenied: "PATH_DENIED",
   NotFound: "NOT_FOUND",
+  TooLarge: "TOO_LARGE",
   InvalidRef: "INVALID_REF",
   ToolDisabled: "TOOL_DISABLED",
   Timeout: "TIMEOUT",
@@ -34,6 +35,7 @@ export class ToolError extends Error {
  *
  * Only `ToolError` messages reach the client; anything else is reported as
  * INTERNAL with a generic message so stack traces and host paths don't leak.
+ * The code is in both the text (for models) and `structuredContent` (for code).
  */
 export function toErrorResult(error: unknown): CallToolResult {
   const { code, message } =
@@ -44,5 +46,6 @@ export function toErrorResult(error: unknown): CallToolResult {
   return {
     isError: true,
     content: [{ type: "text", text: `${code}: ${message}` }],
+    structuredContent: { error: { code, message } },
   };
 }
