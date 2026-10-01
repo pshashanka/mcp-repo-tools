@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "MCP server that exposes a local git repository to AI agents, read-only by default.",
   "license": "MIT",
+  "author": "Shashanka",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pshashanka/mcp-repo-tools.git"
+  },
+  "homepage": "https://github.com/pshashanka/mcp-repo-tools#readme",
+  "bugs": {
+    "url": "https://github.com/pshashanka/mcp-repo-tools/issues"
+  },
   "type": "module",
   "bin": {
     "mcp-repo-tools": "dist/index.js"

@@ -88,7 +88,7 @@ read goes through `RepoPaths`, **every** subprocess through `runProcess`.
 Requires Node ≥ 22.12, git ≥ 2.44 and pnpm. Linux or macOS.
 
 ```sh
-git clone https://github.com/<you>/mcp-repo-tools && cd mcp-repo-tools
+git clone https://github.com/pshashanka/mcp-repo-tools && cd mcp-repo-tools
 pnpm install && pnpm build
 node dist/index.js --repo /path/to/your/repo   # speaks MCP on stdio
 ```
