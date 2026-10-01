@@ -17,7 +17,7 @@ export type ToolInput<T> =
   T extends ToolDefinition<infer In, z.ZodRawShape> ? z.input<z.ZodObject<In>> : never;
 
 /** Validates raw input against the tool's schema (as the MCP server would), then runs it. */
-export function callTool<In extends z.ZodRawShape, Out extends z.ZodRawShape>(
+export async function callTool<In extends z.ZodRawShape, Out extends z.ZodRawShape>(
   tool: ToolDefinition<In, Out>,
   input: z.input<z.ZodObject<In>>,
   context: ToolContext,
