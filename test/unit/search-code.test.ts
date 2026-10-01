@@ -77,7 +77,7 @@ describe("search_code", () => {
     await expect(search({ query: "do-not-leak", pathGlobs: [".env"] })).resolves.toMatchObject({
       matches: [],
     });
-    await expect(search({ query: "do-not-leak", ref: "HEAD" })).resolves.toMatchObject({
+    await expect(search({ query: "API_KEY", ref: repo.baseSha })).resolves.toMatchObject({
       matches: [],
     });
   });

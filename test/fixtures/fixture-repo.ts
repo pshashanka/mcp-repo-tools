@@ -19,7 +19,7 @@ export interface FixtureRepo {
  *
  *   main:    base ── main-only (README.md edited)
  *              \
- *   feature:    feature (modify, add, delete, rename, binary)   ← HEAD
+ *   feature:    feature (modify, add, delete, rename, binary, .env)   ← HEAD
  *
  * It's built at test time, not committed, so this repo never contains a nested .git.
  */
@@ -101,6 +101,7 @@ export async function createFixtureRepo(): Promise<FixtureRepo> {
       "",
     ].join("\n"),
   );
+  await write(".env", "API_KEY=rotated-secret\n");
   await write("assets/logo.png", new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x00, 0x01, 0x02, 0x03]));
   git("rm", "--quiet", "src/legacy.js");
   git("mv", "docs/old-name.md", "docs/new-name.md");
