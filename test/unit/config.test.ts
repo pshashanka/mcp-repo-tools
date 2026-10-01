@@ -1,4 +1,5 @@
-import { mkdtemp, realpath, rm } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { mkdir, mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -8,6 +9,7 @@ let dir: string;
 
 beforeAll(async () => {
   dir = await realpath(await mkdtemp(join(tmpdir(), "config-")));
+  execFileSync("git", ["init", "--quiet", dir]);
 });
 
 afterAll(async () => {
@@ -52,5 +54,22 @@ describe("createConfig", () => {
 
   it("rejects a repo path that does not exist", async () => {
     await expect(createConfig({ repo: join(dir, "nope") })).rejects.toThrow(/does not exist/);
+  });
+
+  it("rejects a directory that is not a git repository", async () => {
+    const plain = await realpath(await mkdtemp(join(tmpdir(), "config-plain-")));
+    try {
+      await expect(createConfig({ repo: plain })).rejects.toThrow(/Not a git repository/);
+    } finally {
+      await rm(plain, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a subdirectory of a repository", async () => {
+    await mkdir(join(dir, "sub"), { recursive: true });
+
+    await expect(createConfig({ repo: join(dir, "sub") })).rejects.toThrow(
+      /root of the git work tree/,
+    );
   });
 });

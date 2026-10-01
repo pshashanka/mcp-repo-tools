@@ -1,6 +1,7 @@
 import { readFile, realpath, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { z } from "zod";
+import { Git } from "./lib/git.js";
 
 /** Paths that are never readable, even if an allow glob matches them. */
 export const DEFAULT_DENY_GLOBS = [
@@ -106,6 +107,17 @@ export async function createConfig(options: ConfigOptions): Promise<Config> {
   });
   if (!(await stat(repoRoot)).isDirectory()) {
     throw new Error(`Repository path is not a directory: ${options.repo}`);
+  }
+
+  // Git reports paths relative to the top level, and the path policy works
+  // relative to repoRoot, so the two must be the same directory.
+  const topLevel = await new Git(repoRoot)
+    .run(["rev-parse", "--show-toplevel"], { maxBytes: 4096 })
+    .then((output) => output.stdout.trim())
+    .catch(() => null);
+  if (topLevel === null) throw new Error(`Not a git repository: ${options.repo}`);
+  if ((await realpath(topLevel)) !== repoRoot) {
+    throw new Error(`--repo must be the root of the git work tree: ${topLevel}`);
   }
 
   const file = ConfigFileSchema.parse(options.file ?? {});
