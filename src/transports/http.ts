@@ -8,7 +8,8 @@ import type { AddressInfo } from "node:net";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
-const LOOPBACK_HOSTNAMES = ["127.0.0.1", "localhost", "[::1]", "::1"];
+const LOOPBACK_HOSTNAMES = ["127.0.0.1", "localhost", "[::1]"];
+const WILDCARD_HOSTNAMES = ["0.0.0.0", "[::]"];
 const MCP_PATH = "/mcp";
 
 export interface HttpOptions {
@@ -16,6 +17,11 @@ export interface HttpOptions {
   port: number;
   /** If set, every request must carry `Authorization: Bearer <authToken>`. */
   authToken?: string | undefined;
+  /**
+   * Extra hostnames (no port) accepted in the Host/Origin check, compared
+   * case-insensitively. Required when `host` is a wildcard bind address.
+   */
+  allowedHosts?: readonly string[] | undefined;
   /** Called per request. Stateless mode needs a fresh server for each one. */
   createServer: () => McpServer;
 }
@@ -33,13 +39,25 @@ export interface RunningHttpServer {
  * rebinding (a web page making a browser call a local server).
  */
 export async function serveHttp(options: HttpOptions): Promise<RunningHttpServer> {
-  const isLoopback = LOOPBACK_HOSTNAMES.includes(options.host);
+  const normalizedHost = normalizeHostname(options.host);
+  const normalizedAllowedHosts = (options.allowedHosts ?? []).map(normalizeHostname);
+  const isLoopback = LOOPBACK_HOSTNAMES.includes(normalizedHost);
+  const isWildcard = WILDCARD_HOSTNAMES.includes(normalizedHost);
   if (!isLoopback && options.authToken === undefined) {
     throw new Error(
       `Refusing to listen on ${options.host} without a token; set MCP_REPO_TOOLS_TOKEN.`,
     );
   }
-  const allowedHostnames = isLoopback ? LOOPBACK_HOSTNAMES : [options.host];
+  if (isWildcard && normalizedAllowedHosts.length === 0) {
+    throw new Error(
+      `Binding to ${options.host} accepts any Host header; pass --allowed-host <name> for each name clients use.`,
+    );
+  }
+  const allowedHostnames = isLoopback
+    ? [...LOOPBACK_HOSTNAMES, ...normalizedAllowedHosts]
+    : isWildcard
+      ? normalizedAllowedHosts
+      : [normalizedHost, ...normalizedAllowedHosts];
   const checkToken = options.authToken === undefined ? null : tokenChecker(options.authToken);
 
   const httpServer = createHttpServer((req, res) => {
@@ -110,10 +128,20 @@ function hostnameAllowed(value: string | undefined, allowed: readonly string[]):
   if (value === undefined) return false;
   try {
     const url = new URL(value.includes("://") ? value : `http://${value}`);
-    return allowed.includes(url.hostname);
+    return allowed.includes(url.hostname.toLowerCase());
   } catch {
     return false;
   }
+}
+
+/**
+ * Normalizes a hostname to the lowercase, bracketed form `URL#hostname`
+ * produces for IPv6 (e.g. `::1` and `[::1]` both become `[::1]`), so bind
+ * addresses and `allowedHosts` entries compare correctly against it.
+ */
+function normalizeHostname(host: string): string {
+  const lower = host.toLowerCase();
+  return lower.includes(":") && !lower.startsWith("[") ? `[${lower}]` : lower;
 }
 
 /** Compares digests so the check takes the same time whatever the input. */

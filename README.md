@@ -142,6 +142,9 @@ claude mcp add --transport http repo-tools http://127.0.0.1:3333/mcp \
   --header "Authorization: Bearer $MCP_REPO_TOOLS_TOKEN"
 ```
 
+Binding beyond loopback (e.g. `--host 0.0.0.0`) requires `MCP_REPO_TOOLS_TOKEN` and at least one
+`--allowed-host <name>` for every hostname clients will send in their `Host` header.
+
 ### Enabling `run_tests`
 
 `run_tests` needs both the `--allow-run-tests` flag and targets in a config file you control:
@@ -162,6 +165,7 @@ is optional.
 --transport <kind>   stdio (default) or http
 --host <host>        HTTP bind address (default: 127.0.0.1)
 --port <port>        HTTP port (default: 3333)
+--allowed-host <name> Extra hostname accepted in Host/Origin (repeatable)
 MCP_REPO_TOOLS_TOKEN If set, HTTP requests must send "Authorization: Bearer <token>"
 ```
 

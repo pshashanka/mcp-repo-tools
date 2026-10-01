@@ -16,6 +16,7 @@ Options:
   --transport <kind>   stdio (default) or http
   --host <host>        HTTP bind address (default: 127.0.0.1)
   --port <port>        HTTP port (default: 3333)
+  --allowed-host <name> Extra hostname accepted in Host/Origin (repeatable)
   --help               Show this help
   --version            Show the version
 
@@ -32,6 +33,7 @@ async function main(): Promise<void> {
       transport: { type: "string", default: "stdio" },
       host: { type: "string", default: "127.0.0.1" },
       port: { type: "string", default: "3333" },
+      "allowed-host": { type: "string", multiple: true, default: [] },
       help: { type: "boolean", default: false },
       version: { type: "boolean", default: false },
     },
@@ -71,6 +73,7 @@ async function main(): Promise<void> {
         host: values.host,
         port,
         authToken: process.env["MCP_REPO_TOOLS_TOKEN"] || undefined,
+        allowedHosts: values["allowed-host"],
         createServer: () => createServer(config),
       });
       console.error(`[mcp-repo-tools] serving ${config.repoRoot} at ${http.url}`);

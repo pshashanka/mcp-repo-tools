@@ -28,7 +28,13 @@ const start = (authToken?: string) =>
 /** Raw request, so tests can send headers fetch won't let us set (like Host). */
 function rawRequest(
   url: string,
-  options: { method?: string; headers?: Record<string, string>; path?: string } = {},
+  options: {
+    method?: string;
+    headers?: Record<string, string>;
+    path?: string;
+    /** TCP connection target, in case `url`'s host (e.g. "0.0.0.0") isn't connectable. */
+    connectHost?: string;
+  } = {},
 ): Promise<number> {
   const target = new URL(url);
   const method = options.method ?? "POST";
@@ -36,7 +42,7 @@ function rawRequest(
   return new Promise((resolve, reject) => {
     const req = request(
       {
-        host: target.hostname,
+        host: options.connectHost ?? target.hostname,
         port: target.port,
         path: options.path ?? target.pathname,
         method,
@@ -135,5 +141,88 @@ describe("binding", () => {
     await expect(
       serveHttp({ host: "0.0.0.0", port: 0, createServer: () => createServer(config) }),
     ).rejects.toThrow(/without a token/);
+  });
+
+  it("refuses a wildcard bind with a token but no allowedHosts", async () => {
+    await expect(
+      serveHttp({
+        host: "0.0.0.0",
+        port: 0,
+        authToken: TOKEN,
+        createServer: () => createServer(config),
+      }),
+    ).rejects.toThrow(/accepts any Host header/);
+  });
+
+  describe("wildcard bind with allowedHosts", () => {
+    let http: RunningHttpServer;
+
+    beforeAll(async () => {
+      http = await serveHttp({
+        host: "0.0.0.0",
+        port: 0,
+        authToken: TOKEN,
+        allowedHosts: ["mcp.internal"],
+        createServer: () => createServer(config),
+      });
+    });
+
+    afterAll(async () => {
+      await http.close();
+    });
+
+    it("accepts a request whose Host matches an allowedHosts entry", async () => {
+      const { port } = new URL(http.url);
+      await expect(
+        rawRequest(http.url, {
+          connectHost: "127.0.0.1",
+          headers: {
+            Host: `mcp.internal:${port}`,
+            Authorization: `Bearer ${TOKEN}`,
+          },
+        }),
+      ).resolves.not.toBe(403);
+    });
+
+    it("rejects a Host that isn't loopback, the bind address, or allowedHosts", async () => {
+      const { port } = new URL(http.url);
+      await expect(
+        rawRequest(http.url, {
+          connectHost: "127.0.0.1",
+          headers: {
+            Host: `evil.example:${port}`,
+            Authorization: `Bearer ${TOKEN}`,
+          },
+        }),
+      ).resolves.toBe(403);
+    });
+  });
+
+  describe("loopback bind with allowedHosts", () => {
+    let http: RunningHttpServer;
+
+    beforeAll(async () => {
+      http = await serveHttp({
+        host: "127.0.0.1",
+        port: 0,
+        allowedHosts: ["dev.local"],
+        createServer: () => createServer(config),
+      });
+    });
+
+    afterAll(async () => {
+      await http.close();
+    });
+
+    it("accepts the extra allowedHosts entry", async () => {
+      const { port } = new URL(http.url);
+      await expect(
+        rawRequest(http.url, { headers: { Host: `dev.local:${port}` } }),
+      ).resolves.not.toBe(403);
+    });
+
+    it("still accepts the plain loopback Host", async () => {
+      await expect(rawRequest(http.url)).resolves.not.toBe(403);
+    });
   });
 });
