@@ -6,11 +6,11 @@ the way a pull request does, and (only if you opt in) run allowlisted test comma
 
 It's the foundation of a three-part series on production AI engineering in the code-review domain:
 
-| Repo                      | What it does                                                                                                       |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **mcp-repo-tools** (this) | MCP server: the agent's only window onto the repo                                                                  |
-| `pr-review-agent`         | LangGraph.js agent that uses these tools to review a PR, with checkpointing and human approval                     |
-| `gameable-tests-bench`    | Tasks with deliberately weak tests, plus a grader that catches agents gaming them (hardcoding, over-mocking, etc.) |
+| Repo                                                                         | What it does                                                                                                       |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **mcp-repo-tools** (this)                                                    | MCP server: the agent's only window onto the repo                                                                  |
+| [`pr-review-agent`](https://github.com/pshashanka/pr-review-agent)           | LangGraph.js agent that uses these tools to review a PR, with checkpointing and human approval                     |
+| [`gameable-tests-bench`](https://github.com/pshashanka/gameable-tests-bench) | Tasks with deliberately weak tests, plus a grader that catches agents gaming them (hardcoding, over-mocking, etc.) |
 
 ```text
 read_file · search_code · list_changed_files · get_diff · run_tests (opt-in)
