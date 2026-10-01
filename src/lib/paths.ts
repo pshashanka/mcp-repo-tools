@@ -74,7 +74,7 @@ export class RepoPaths {
     });
 
     const realRelative = relative(this.#root, real);
-    if (realRelative.startsWith("..") || isAbsolute(realRelative)) {
+    if (realRelative === ".." || realRelative.startsWith(`..${sep}`) || isAbsolute(realRelative)) {
       throw denied(path, "resolves outside the repository");
     }
     const realPath = realRelative.split(sep).join("/");

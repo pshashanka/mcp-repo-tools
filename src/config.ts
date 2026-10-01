@@ -5,7 +5,8 @@ import { Git } from "./lib/git.js";
 
 /** Paths that are never readable, even if an allow glob matches them. */
 export const DEFAULT_DENY_GLOBS = [
-  ".git/**",
+  "**/.git",
+  "**/.git/**",
   "**/.env",
   "**/.env.*",
   "**/*.pem",
@@ -18,6 +19,9 @@ export const DEFAULT_DENY_GLOBS = [
   "**/.npmrc",
   "**/.netrc",
   "**/.pypirc",
+  "**/.envrc",
+  "**/.git-credentials",
+  "**/.aws/**",
 ];
 
 export const DEFAULT_TEST_GLOBS = [

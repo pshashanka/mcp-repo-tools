@@ -177,7 +177,8 @@ server enforces its policy whatever the model asks for. Full details are in
 - **Path containment.** Paths must be repo-relative; `..`, absolute paths and NUL bytes are
   rejected. Symlinks are followed and the _real_ target is checked again, so a link can't reach
   outside the repo or reach a denied file.
-- **Deny list.** `.git/`, `.env*`, private keys, `.npmrc`/`.netrc` and the like are never readable or
+- **Deny list.** `.git/` (including nested `.git` directories), `.env*`, private keys,
+  `.npmrc`/`.netrc`, `.envrc`, `.git-credentials`, `.aws/` and the like are never readable or
   searchable, in the working tree or at any commit. Matching is case-insensitive. Config can add to
   the deny list but can't remove the defaults. An optional allow list narrows things further.
 - **Hardened git.** No shell, ever: arguments are passed as an array. Refs that look like options
