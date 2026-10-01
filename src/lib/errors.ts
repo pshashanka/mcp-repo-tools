@@ -35,7 +35,10 @@ export class ToolError extends Error {
  *
  * Only `ToolError` messages reach the client; anything else is reported as
  * INTERNAL with a generic message so stack traces and host paths don't leak.
- * The code is in both the text (for models) and `structuredContent` (for code).
+ *
+ * The text is always `CODE: message`. The code isn't put in `structuredContent`
+ * because clients validate that against the tool's success output schema even
+ * on error results.
  */
 export function toErrorResult(error: unknown): CallToolResult {
   const { code, message } =
@@ -46,6 +49,5 @@ export function toErrorResult(error: unknown): CallToolResult {
   return {
     isError: true,
     content: [{ type: "text", text: `${code}: ${message}` }],
-    structuredContent: { error: { code, message } },
   };
 }

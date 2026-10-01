@@ -8,7 +8,6 @@ describe("toErrorResult", () => {
     expect(result).toEqual({
       isError: true,
       content: [{ type: "text", text: "NOT_FOUND: No such file: a.ts" }],
-      structuredContent: { error: { code: "NOT_FOUND", message: "No such file: a.ts" } },
     });
   });
 
