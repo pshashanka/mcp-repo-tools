@@ -1,0 +1,24 @@
+{
+  "denyGlobs": ["secrets/**", "**/*.sqlite"],
+  "testGlobs": ["**/*.test.ts", "test/**"],
+  "limits": {
+    "maxFileBytes": 262144,
+    "maxDiffBytes": 524288,
+    "maxSearchResults": 200,
+    "maxOutputBytes": 65536
+  },
+  "runTests": {
+    "timeoutMs": 120000,
+    "envAllowlist": ["NODE_OPTIONS"],
+    "targets": {
+      "unit": {
+        "command": ["pnpm", "vitest", "run"],
+        "allowedArgs": ["[\\w./-]+\\.test\\.ts"]
+      },
+      "typecheck": {
+        "command": ["pnpm", "tsc", "--noEmit"],
+        "timeoutMs": 60000
+      }
+    }
+  }
+}
