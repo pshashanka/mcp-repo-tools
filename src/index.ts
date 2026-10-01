@@ -2,6 +2,7 @@
 import { parseArgs } from "node:util";
 import { createConfig, loadConfigFile } from "./config.js";
 import { SERVER_INFO, createServer } from "./server.js";
+import { serveHttp } from "./transports/http.js";
 import { serveStdio } from "./transports/stdio.js";
 
 const USAGE = `Usage: mcp-repo-tools [options]
@@ -55,15 +56,32 @@ async function main(): Promise<void> {
     console.error("[mcp-repo-tools] --allow-run-tests has no effect: no targets in --config.");
   }
 
-  const server = createServer(config);
   switch (values.transport) {
-    case "stdio":
-      await serveStdio(server);
+    case "stdio": {
+      await serveStdio(createServer(config));
+      console.error(`[mcp-repo-tools] serving ${config.repoRoot} over stdio`);
       break;
+    }
+    case "http": {
+      const port = Number(values.port);
+      if (!Number.isInteger(port) || port < 0 || port > 65_535) {
+        throw new Error(`Invalid port: ${values.port}`);
+      }
+      const http = await serveHttp({
+        host: values.host,
+        port,
+        authToken: process.env["MCP_REPO_TOOLS_TOKEN"] || undefined,
+        createServer: () => createServer(config),
+      });
+      console.error(`[mcp-repo-tools] serving ${config.repoRoot} at ${http.url}`);
+      for (const signal of ["SIGINT", "SIGTERM"] as const) {
+        process.once(signal, () => void http.close().then(() => process.exit(0)));
+      }
+      break;
+    }
     default:
-      throw new Error(`Unknown transport: ${values.transport}`);
+      throw new Error(`Unknown transport: ${values.transport} (expected stdio or http)`);
   }
-  console.error(`[mcp-repo-tools] serving ${config.repoRoot} over ${values.transport}`);
 }
 
 main().catch((error: unknown) => {
